@@ -1,1236 +1,445 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AR Heritage — Offline-First Real-Time Heritage Recognition | Sulu Heritage Tech</title>
-  <meta name="description" content="Identify historical monuments in Bhaktapur instantly using on-device edge AI. 91.64% accuracy, 1.80 MB model footprint, sub-100ms inference. No internet required.">
-  <meta name="keywords" content="AR Heritage, Edge AI, On-device ML, TensorFlow Lite, Knowledge Distillation, Bhaktapur, Flutter, Cultural Preservation">
-  <meta property="og:title" content="AR Heritage — Offline-First Real-Time Heritage Recognition">
-  <meta property="og:description" content="Identify historical monuments in Bhaktapur instantly using on-device edge AI. 91.64% accuracy, 1.80 MB model footprint, sub-100ms inference.">
-  <meta property="og:image" content="./assets/app_icon.png">
-  <meta property="og:type" content="website">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="theme-color" content="#090A0F">
-  <link rel="icon" type="image/png" href="./assets/app_icon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AR Heritage: identify Bhaktapur landmarks offline</title>
+<meta name="description" content="Point your phone at a Bhaktapur landmark and learn its history. Recognition runs on your device, so it works with no signal. Free Android beta.">
+<meta property="og:title" content="AR Heritage: identify Bhaktapur landmarks offline">
+<meta property="og:description" content="Point your phone at a landmark and learn its history. Runs on-device, no signal needed.">
+<!-- TODO: og:image must be an absolute URL (ideally 1200x630). Replace YOUR-DOMAIN. -->
+<meta property="og:image" content="https://YOUR-DOMAIN/assets/og-image.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0c0d12">
+<meta name="color-scheme" content="dark">
+<link rel="icon" type="image/png" href="./assets/app_icon.png">
 
-  <!-- Google Fonts: Cinzel (Refined Heritage Serif) + Plus Jakarta Sans (Clean Modern Sans) + JetBrains Mono -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0c0d12; --panel:#15171f; --line:rgba(255,255,255,.12);
+  --text:#ebe8e0; --muted:#a6a9b3; --gold:#d4af37; --gold-hi:#f3ca52;
+  --serif:ui-serif,"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:5.5rem;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+body{margin:0;background:var(--ink);color:var(--text);font:1rem/1.6 var(--sans);-webkit-font-smoothing:antialiased;
+  padding-bottom:env(safe-area-inset-bottom,0)}
+img{max-width:100%;height:auto;display:block}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--gold-hi);outline-offset:3px;border-radius:4px}
+::selection{background:var(--gold);color:#000}
+.wrap{max-width:70rem;margin:0 auto;padding:0 clamp(1rem,4vw,2rem)}
+h1,h2,h3{font-family:var(--serif);margin:0;font-weight:700}
+h1{font-size:clamp(2.25rem,6vw,4rem);line-height:1.05;letter-spacing:-.02em}
+h2{font-size:clamp(1.75rem,3.6vw,2.5rem);line-height:1.12;letter-spacing:-.015em}
+h3{font-size:1.2rem;line-height:1.25}
+p{margin:0}
+.muted{color:var(--muted)}
+.lede{font-size:1.2rem;color:#cfd0d6;max-width:34rem}
 
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            serif: ['Cinzel', 'serif'],
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace'],
-          },
-          colors: {
-            heritage: {
-              gold: '#D4AF37',
-              'gold-light': '#F5DEB3',
-              'gold-bright': '#F3CA52',
-              'gold-dark': '#967425',
-              bronze: '#B8860B',
-              amber: '#F59E0B',
-              obsidian: '#090A0F',
-              onyx: '#0D0F16',
-              surface: '#131622',
-              card: '#161A29',
-              border: 'rgba(212, 175, 55, 0.22)',
-              borderMuted: 'rgba(255, 255, 255, 0.08)'
-            }
-          },
-          boxShadow: {
-            'gold-glow': '0 0 35px -5px rgba(212, 175, 55, 0.3)',
-            'gold-glow-lg': '0 0 60px -10px rgba(212, 175, 55, 0.45)',
-            'dark-elevation': '0 25px 50px -12px rgba(0, 0, 0, 0.75)',
-          },
-          animation: {
-            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-            'float': 'float 6s ease-in-out infinite',
-            'shimmer': 'shimmer 2.5s linear infinite',
-            'scan-line': 'scanLine 3s ease-in-out infinite',
-          },
-          keyframes: {
-            float: {
-              '0%, 100%': { transform: 'translateY(0px)' },
-              '50%': { transform: 'translateY(-10px)' },
-            },
-            shimmer: {
-              '0%': { backgroundPosition: '-200% 0' },
-              '100%': { backgroundPosition: '200% 0' },
-            },
-            scanLine: {
-              '0%': { transform: 'translateY(0%)', opacity: '0.2' },
-              '50%': { transform: 'translateY(320px)', opacity: '0.9' },
-              '100%': { transform: 'translateY(0%)', opacity: '0.2' },
-            }
-          }
-        }
-      }
-    }
-  </script>
+/* Header */
+header{position:sticky;top:0;z-index:10;background:rgba(12,13,18,.82);backdrop-filter:blur(18px) saturate(160%);
+  -webkit-backdrop-filter:blur(18px) saturate(160%);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.25rem 1rem;min-height:3.5rem}
+.brand{display:flex;align-items:center;gap:.65rem;text-decoration:none;font-family:var(--serif);font-weight:700;font-size:1.15rem}
+.brand img{width:2rem;height:2rem;border-radius:.5rem}
+nav{display:flex;gap:1.5rem;font-size:.9375rem;color:var(--muted)}
+nav a{text-decoration:none;padding:.5rem 0}
+nav a:hover{color:var(--text)}
+@media (max-width:40rem){
+  nav{order:3;width:100%;overflow-x:auto;gap:1.25rem;padding-bottom:.15rem}
+}
 
-  <style>
-    /* Custom Gold Gradients & Micro Utilities */
-    .gold-gradient-text {
-      background: linear-gradient(135deg, #FFF4D0 0%, #F3CA52 35%, #D4AF37 70%, #967425 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .gold-gradient-border {
-      border-image: linear-gradient(to bottom right, rgba(243, 202, 82, 0.6), rgba(212, 175, 55, 0.1), rgba(150, 116, 37, 0.4)) 1;
-    }
-    .mesh-bg {
-      background-image: 
-        radial-gradient(at 15% 20%, rgba(212, 175, 55, 0.08) 0px, transparent 50%),
-        radial-gradient(at 85% 15%, rgba(245, 158, 11, 0.05) 0px, transparent 45%),
-        radial-gradient(at 50% 80%, rgba(212, 175, 55, 0.06) 0px, transparent 60%);
-    }
-    .glass-card {
-      background: rgba(22, 26, 41, 0.65);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(212, 175, 55, 0.18);
-    }
-    .glass-card:hover {
-      border-color: rgba(212, 175, 55, 0.4);
-    }
-    .phone-mockup-frame {
-      box-shadow: 0 0 0 2px #26231c, 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(212, 175, 55, 0.15);
-    }
-    /* Subtle scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #090A0F;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #2A2416;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #D4AF37;
-    }
-  </style>
+/* Buttons: feedback on press, instant */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font:600 1rem/1 var(--sans);
+  padding:.95rem 1.5rem;border-radius:.85rem;border:1px solid var(--line);background:var(--panel);color:var(--text);
+  text-decoration:none;cursor:pointer;transition:transform 100ms ease-out,background-color 150ms,border-color 150ms;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.btn:hover{border-color:var(--gold)}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(180deg,var(--gold-hi),var(--gold));color:#14110a;border-color:transparent}
+.btn-primary:hover{filter:brightness(1.07)}
+.btn-sm{padding:.6rem 1rem;font-size:.9375rem;border-radius:.65rem}
+
+/* Hero */
+.hero{padding:clamp(2.5rem,7vw,5.5rem) 0 clamp(3rem,7vw,5rem)}
+.hero .wrap{display:grid;gap:3rem;align-items:center}
+@media (min-width:56rem){.hero .wrap{grid-template-columns:1.15fr .85fr}}
+.hero-copy{display:grid;gap:1.5rem;justify-items:start}
+.actions{display:flex;flex-wrap:wrap;gap:.75rem}
+.fine{font-size:.9375rem;color:var(--muted)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));gap:1.25rem 2rem;margin:.75rem 0 0;padding:1.25rem 0 0;
+  border-top:1px solid var(--line);width:100%}
+.facts div{display:grid;gap:.15rem}
+.facts dt{font-size:.9375rem;color:var(--muted);order:2}
+.facts dd{margin:0;font:600 1.6rem/1.1 var(--serif);order:1}
+.facts small{display:block;font:400 .875rem/1.4 var(--sans);color:var(--muted);margin-top:.15rem}
+
+/* Phone */
+.phone{width:min(19rem,78vw);margin-inline:auto;padding:.6rem;border-radius:2.7rem;background:#1b1912;
+  border:1px solid rgba(212,175,55,.35);box-shadow:0 30px 60px -20px rgba(0,0,0,.85),0 0 60px -20px rgba(212,175,55,.35)}
+.screen{aspect-ratio:9/19.5;border-radius:2.1rem;overflow:hidden;background:#000}
+.screen img{width:100%;height:100%;object-fit:cover;transition:opacity 120ms ease-out}
+.screen img.out{opacity:0}
+
+/* Sections */
+section{padding:clamp(3rem,7vw,5.5rem) 0;border-top:1px solid var(--line)}
+.split{display:grid;gap:3rem;align-items:center}
+@media (min-width:56rem){.split{grid-template-columns:.9fr 1.1fr}}
+.tabs{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-bottom:1.25rem}
+.tab{font:500 .9375rem/1 var(--sans);padding:.65rem 1rem;border-radius:.65rem;border:1px solid var(--line);background:transparent;
+  color:var(--muted);cursor:pointer;transition:transform 100ms ease-out,color 150ms,border-color 150ms,background-color 150ms}
+.tab:active{transform:scale(.97)}
+.tab[aria-selected=true]{color:var(--gold-hi);border-color:var(--gold);background:rgba(212,175,55,.12)}
+.caption{text-align:center;margin-top:1rem;font-size:.9375rem;color:var(--muted)}
+.features{display:grid;gap:2rem}
+.features h3{margin-bottom:.4rem}
+.features p{color:#cfd0d6;max-width:34rem}
+code{font-family:var(--mono);font-size:.875em;color:var(--gold-hi)}
+
+/* Research details */
+details{border:1px solid var(--line);border-radius:1rem;background:var(--panel)}
+summary{cursor:pointer;padding:1.25rem 1.5rem;font:700 1.2rem/1.3 var(--serif);list-style:none;display:flex;justify-content:space-between;gap:1rem}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--gold);font-family:var(--sans);font-weight:400;font-size:1.5rem;line-height:1}
+details[open] summary::after{content:"\2212"}
+.detail-body{padding:0 1.5rem 1.75rem;display:grid;gap:1.5rem}
+.detail-body p{max-width:42rem;color:#cfd0d6}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9375rem;min-width:32rem}
+th,td{text-align:left;padding:.7rem .85rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:500}
+td:first-child{color:var(--text)}
+.figs{display:grid;gap:1rem}
+@media (min-width:48rem){.figs{grid-template-columns:1fr 1fr}}
+figure{margin:0;display:grid;gap:.5rem}
+figure img{border-radius:.65rem;background:#fff;width:100%}
+figcaption{font-size:.875rem;color:var(--muted)}
+
+/* Download */
+.download{display:grid;gap:2rem}
+@media (min-width:56rem){.download{grid-template-columns:1fr 1fr}}
+ol.steps{margin:0;padding-left:1.25rem;display:grid;gap:.75rem;color:#cfd0d6}
+ol.steps li::marker{color:var(--gold);font-weight:700}
+.hash{font-family:var(--mono);font-size:.8125rem;word-break:break-all;color:var(--muted)}
+
+footer{border-top:1px solid var(--line);padding:3rem 0 calc(3rem + env(safe-area-inset-bottom,0));color:var(--muted);font-size:.9375rem}
+footer .wrap{display:grid;gap:1.5rem}
+@media (min-width:48rem){footer .wrap{grid-template-columns:1.2fr 1fr 1fr}}
+footer a{text-decoration:none;border-bottom:1px solid var(--line)}
+footer a:hover{color:var(--text);border-color:var(--gold)}
+footer ul{list-style:none;margin:0;padding:0;display:grid;gap:.5rem}
+.strong{color:var(--text);font-weight:600}
+
+/* Dialog */
+dialog{border:1px solid rgba(212,175,55,.4);border-radius:1.25rem;background:var(--panel);color:var(--text);padding:0;
+  width:min(26rem,calc(100vw - 2rem));max-height:calc(100dvh - 2rem);
+  opacity:0;transform:translateY(12px) scale(.98);
+  transition:opacity 200ms ease-out,transform 200ms ease-out,overlay 200ms allow-discrete,display 200ms allow-discrete}
+dialog[open]{opacity:1;transform:none}
+@starting-style{dialog[open]{opacity:0;transform:translateY(12px) scale(.98)}}
+dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(8px);transition:opacity 200ms,display 200ms allow-discrete,overlay 200ms allow-discrete;opacity:0}
+dialog[open]::backdrop{opacity:1}
+@starting-style{dialog[open]::backdrop{opacity:0}}
+.box{padding:1.75rem;display:grid;gap:1rem;position:relative}
+.box h2{font-size:1.5rem}
+.x{position:absolute;top:.75rem;right:.75rem;width:2.75rem;height:2.75rem;display:grid;place-items:center;background:none;border:0;
+  color:var(--muted);font-size:1.5rem;cursor:pointer;border-radius:.65rem}
+.x:hover{color:var(--text)}
+label{display:grid;gap:.35rem;font-size:.9375rem;color:var(--muted)}
+input,select{font:inherit;font-size:1rem;color:var(--text);background:#0c0d12;border:1px solid var(--line);border-radius:.65rem;padding:.8rem .9rem;width:100%}
+input:focus,select:focus{border-color:var(--gold);outline:none;box-shadow:0 0 0 3px rgba(212,175,55,.25)}
+.trap{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.err{color:#fca5a5;font-size:.9375rem}
+.ok{padding:1rem;border-radius:.75rem;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.35);color:#a7f3d0}
+[hidden]{display:none!important}
+
+/* Accessibility preferences */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;scroll-behavior:auto!important}
+  dialog,.btn:active,.tab:active{transform:none}
+}
+@media (prefers-reduced-transparency:reduce){
+  header{background:var(--ink);backdrop-filter:none;-webkit-backdrop-filter:none}
+  dialog::backdrop{backdrop-filter:none;background:#000}
+}
+@media (prefers-contrast:more){
+  :root{--line:rgba(255,255,255,.4);--muted:#d0d2d9}
+}
+</style>
 </head>
 
-<body class="bg-heritage-obsidian text-slate-200 font-sans antialiased selection:bg-heritage-gold selection:text-black min-h-screen mesh-bg relative">
+<body>
 
-  <!-- Ambient Light Orbs -->
-  <div class="pointer-events-none fixed inset-0 overflow-hidden z-0">
-    <div class="absolute -top-40 left-1/4 w-[500px] h-[500px] bg-heritage-gold/5 rounded-full blur-[140px]"></div>
-    <div class="absolute top-[35%] -right-40 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-[160px]"></div>
-    <div class="absolute bottom-20 left-10 w-[550px] h-[550px] bg-heritage-gold/5 rounded-full blur-[150px]"></div>
+<header>
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="./assets/app_icon.png" alt="" width="64" height="64">AR Heritage</a>
+    <nav aria-label="Primary">
+      <a href="#screens">What it does</a>
+      <a href="#how">How it works</a>
+      <a href="#download">Install</a>
+    </nav>
+    <a class="btn btn-primary btn-sm" href="#download">Get the app</a>
   </div>
+</header>
 
-  <!-- Top Announcement Banner -->
-  <aside aria-label="Program Announcement" class="relative z-50 bg-gradient-to-r from-heritage-onyx via-[#1a150b] to-heritage-onyx border-b border-heritage-gold/25 py-2.5 px-4 text-xs font-mono tracking-wide text-amber-200/90 text-center flex items-center justify-center gap-2">
-    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-heritage-gold/15 text-heritage-gold-bright border border-heritage-gold/30 font-semibold text-[10px] uppercase tracking-wider">
-      <span class="w-1.5 h-1.5 rounded-full bg-heritage-gold-bright animate-ping"></span>
-      Open Beta
-    </span>
-    <span>Offline-first monument recognition for Bhaktapur. Free Android beta.</span>
-    <a href="#technical-architecture" class="underline hover:text-white transition-colors ml-1 hidden md:inline">See Model Metrics &rarr;</a>
-  </aside>
+<main id="top">
 
-  <!-- Sticky Main Navigation -->
-  <header class="sticky top-0 z-40 backdrop-blur-xl bg-heritage-obsidian/85 border-b border-heritage-gold/15 transition-all duration-300">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-      
-      <!-- Logo & Brand -->
-      <a href="#" class="flex items-center gap-3.5 group">
-        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#231b0e] to-heritage-surface border border-heritage-gold/40 flex items-center justify-center p-1.5 shadow-gold-glow group-hover:border-heritage-gold transition-colors">
-          <img src="./assets/app_icon.png" alt="AR Heritage Logo" class="w-full h-full object-contain filter drop-shadow">
-        </div>
-        <div>
-          <span class="font-serif font-bold text-xl tracking-wider text-white flex items-center gap-2">
-            AR HERITAGE
-            <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-heritage-gold/10 text-heritage-gold border border-heritage-gold/30">v1.0</span>
-          </span>
-          <span class="block text-[11px] font-mono text-amber-200/60 uppercase tracking-widest -mt-0.5">Sulu Heritage Tech</span>
-        </div>
-      </a>
+<div class="hero">
+  <div class="wrap">
+    <div class="hero-copy">
+      <h1>Point your camera at Nyatapola. Know what you're looking at.</h1>
+      <p class="lede">AR Heritage recognizes landmarks in Bhaktapur Durbar Square and Taumadhi Square and tells you their history. Recognition runs on your phone, so it works with no signal.</p>
 
-      <!-- Desktop Nav Links -->
-      <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
-        <a href="#features" class="hover:text-heritage-gold-bright transition-colors">App Features</a>
-        <a href="#technical-architecture" class="hover:text-heritage-gold-bright transition-colors flex items-center gap-1.5">
-          <span>Edge-AI Architecture</span>
-          <span class="text-[10px] font-mono bg-emerald-500/15 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/30">91.64%</span>
-        </a>
-        <a href="#claude-pipeline" class="hover:text-heritage-gold-bright transition-colors flex items-center gap-1.5">
-          <span>Claude Pipeline</span>
-          <span class="text-[10px] font-mono bg-amber-500/15 text-heritage-gold-bright px-1.5 py-0.5 rounded border border-heritage-gold/30">Claude</span>
-        </a>
-        <a href="#field-proof" class="hover:text-heritage-gold-bright transition-colors">Field Testing</a>
-      </nav>
-
-      <!-- Header CTAs -->
-      <div class="flex items-center gap-3">
-        <a href="./downloads/ar_heritage_v1.0_beta.apk" download="ar_heritage_v1.0_beta.apk" id="nav-download-apk" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-heritage-surface border border-heritage-gold/30 text-amber-100 hover:border-heritage-gold hover:bg-heritage-card transition-all">
-          <svg class="w-4 h-4 text-heritage-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          <span>APK (80 MB)</span>
-        </a>
-        <button onclick="openBetaModal()" id="nav-join-beta" class="relative group px-5 py-2.5 rounded-lg font-semibold text-xs text-black uppercase tracking-wider overflow-hidden bg-gradient-to-r from-heritage-gold-bright via-heritage-gold to-heritage-gold-dark hover:brightness-110 shadow-gold-glow transition-all active:scale-95">
-          <span class="relative z-10 flex items-center gap-2">
-            <span>Join the Beta</span>
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-          </span>
-        </button>
+      <div class="actions">
+        <a class="btn btn-primary" href="./downloads/ar_heritage_v1.0_beta.apk" download="ar_heritage_v1.0_beta.apk">Download for Android</a>
+        <button class="btn" type="button" id="open-beta">Get beta updates</button>
       </div>
+      <p class="fine">Free beta. Android 8.0 or newer. 80.5 MB. Recognizes 3 landmarks so far.</p>
 
+      <dl class="facts">
+        <div><dt>Accuracy</dt><dd>91.64%</dd><small>On 718 validation images</small></div>
+        <div><dt>Model size</dt><dd>1.80 MB</dd><small>Runs entirely on-device</small></div>
+        <div><dt>Speed</dt><dd>about 100 ms</dd><small>Per scan, measured on one OPPO CPH2413 (95 to 111 ms)</small></div>
+      </dl>
     </div>
-  </header>
 
-  <!-- Hero Section -->
-  <section class="relative pt-12 pb-24 md:pt-20 md:pb-32 overflow-hidden z-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <div class="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-        
-        <!-- Left Column: Vision, Positioning, Headline & CTAs -->
-        <div class="lg:col-span-7 space-y-8 text-center lg:text-left">
-          
-          <!-- Category Pill -->
-          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-heritage-surface/80 border border-heritage-gold/30 text-xs font-mono text-amber-200">
-            <span class="w-2 h-2 rounded-full bg-heritage-gold animate-pulse"></span>
-            <span>Autonomous On-Device Heritage Vision</span>
-            <span class="text-slate-500">|</span>
-            <span class="text-heritage-gold-bright">Bhaktapur Durbar Square</span>
-          </div>
-
-          <!-- Headline (Exact required wording) -->
-          <div class="space-y-4">
-            <h1 class="font-serif text-4xl sm:text-5xl xl:text-6xl font-extrabold tracking-tight text-white leading-[1.12]">
-              Offline-First Real-Time <br>
-              <span class="gold-gradient-text">Heritage Recognition.</span>
-            </h1>
-
-            <!-- Subheadline (Exact required wording) -->
-            <p class="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto lg:mx-0 font-normal leading-relaxed">
-              Identify historical monuments in Bhaktapur instantly using on-device edge AI. <span class="text-amber-200 font-medium">No internet required.</span>
-            </p>
-          </div>
-
-          <!-- Key Metrics Micro-Bar -->
-          <div class="grid grid-cols-3 gap-4 pt-2 max-w-lg mx-auto lg:mx-0">
-            <div class="p-3.5 rounded-xl bg-heritage-surface/60 border border-heritage-gold/20 text-center lg:text-left">
-              <div class="text-2xl sm:text-3xl font-mono font-bold text-white flex items-baseline justify-center lg:justify-start gap-1">
-                <span>91.64</span><span class="text-sm font-sans text-heritage-gold">%</span>
-              </div>
-              <div class="text-[11px] font-mono text-slate-400 uppercase tracking-wider mt-1">Accuracy</div>
-            </div>
-            <div class="p-3.5 rounded-xl bg-heritage-surface/60 border border-heritage-gold/20 text-center lg:text-left">
-              <div class="text-2xl sm:text-3xl font-mono font-bold text-white flex items-baseline justify-center lg:justify-start gap-1">
-                <span>1.80</span><span class="text-sm font-sans text-heritage-gold">MB</span>
-              </div>
-              <div class="text-[11px] font-mono text-slate-400 uppercase tracking-wider mt-1">TFLite Footprint</div>
-            </div>
-            <div class="p-3.5 rounded-xl bg-heritage-surface/60 border border-heritage-gold/20 text-center lg:text-left">
-              <div class="text-2xl sm:text-3xl font-mono font-bold text-white flex items-baseline justify-center lg:justify-start gap-1">
-                <span>&lt;100</span><span class="text-sm font-sans text-heritage-gold">ms</span>
-              </div>
-              <div class="text-[11px] font-mono text-slate-400 uppercase tracking-wider mt-1">Edge Latency</div>
-            </div>
-          </div>
-
-          <!-- CTAs -->
-          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
-            <button onclick="openBetaModal()" id="hero-join-beta-cta" class="w-full sm:w-auto px-8 py-4 rounded-xl font-bold text-sm text-black uppercase tracking-wider bg-gradient-to-r from-heritage-gold-bright via-heritage-gold to-heritage-gold-dark hover:brightness-110 shadow-gold-glow flex items-center justify-center gap-3 transition-transform active:scale-95 group">
-              <span>Join the Beta</span>
-              <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-            </button>
-
-            <a href="./downloads/ar_heritage_v1.0_beta.apk" download="ar_heritage_v1.0_beta.apk" id="hero-download-apk-cta" class="w-full sm:w-auto px-7 py-4 rounded-xl font-semibold text-sm text-slate-200 bg-heritage-surface/90 hover:bg-heritage-card border border-heritage-gold/30 hover:border-heritage-gold flex items-center justify-center gap-3 transition-colors">
-              <svg class="w-5 h-5 text-heritage-gold-bright" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              <span>Download Android APK</span>
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-black/40 text-slate-400 border border-white/10">v1.0</span>
-            </a>
-          </div>
-
-          <!-- Proof Badges -->
-          <div class="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-y-2 gap-x-6 text-xs text-slate-400 font-mono">
-            <div class="flex items-center gap-2">
-              <svg class="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-              <span>Zero Cloud Dependency</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <svg class="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-              <span>Knowledge-Distilled CNN</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <svg class="w-4 h-4 text-heritage-gold" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              <span>Bhaktapur Durbar Square UNESCO Zone</span>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Right Column: Visual Proof Hero Mockup (Real App Scan Interface) -->
-        <div class="lg:col-span-5 relative flex justify-center">
-          
-          <!-- Outer Decorative Glow Rings -->
-          <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div class="w-[340px] h-[640px] rounded-[52px] border border-heritage-gold/20 animate-pulse-slow"></div>
-            <div class="w-[380px] h-[680px] rounded-[60px] border border-heritage-gold/10"></div>
-          </div>
-
-          <!-- Smartphone Shell Container -->
-          <div class="relative w-[300px] sm:w-[320px] rounded-[48px] p-3 bg-gradient-to-b from-[#2b271d] via-[#1a1813] to-[#0c0d12] phone-mockup-frame animate-float">
-            
-            <!-- Phone Speaker & Camera Notch -->
-            <div class="absolute top-6 left-1/2 -translate-x-1/2 w-28 h-4 bg-black rounded-full z-30 flex items-center justify-center">
-              <div class="w-10 h-1 bg-slate-800 rounded-full"></div>
-              <div class="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-700 ml-2"></div>
-            </div>
-
-            <!-- Screen Area with Real Screenshot -->
-            <div class="relative w-full aspect-[9/19.5] rounded-[38px] overflow-hidden bg-black border border-heritage-gold/30">
-              
-              <!-- Real Scan Screen Image -->
-              <img src="./assets/scan_interface.jpeg" alt="AR Heritage Real-Time Camera Scanner" class="w-full h-full object-cover">
-
-              <!-- Real-time HUD Simulation Overlay -->
-              <div class="absolute top-16 left-4 right-4 pointer-events-none">
-                <div class="flex items-center justify-between text-[10px] font-mono text-heritage-gold bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-heritage-gold/30">
-                  <span class="flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                    <span>TFLITE ACTIVE</span>
-                  </span>
-                  <span>OPPO RELEASE • 98ms</span>
-                </div>
-              </div>
-
-              <!-- Animated Scan Laser Beam -->
-              <div class="absolute left-6 right-6 h-0.5 bg-gradient-to-r from-transparent via-heritage-gold-bright to-transparent shadow-[0_0_12px_#D4AF37] animate-scan-line pointer-events-none"></div>
-
-              <!-- Live Match Float Card (Simulating App Detection) -->
-              <div class="absolute bottom-24 left-3 right-3 bg-heritage-surface/95 backdrop-blur-xl border border-heritage-gold/40 p-3 rounded-2xl shadow-dark-elevation pointer-events-none transition-all">
-                <div class="flex items-start gap-2.5">
-                  <div class="w-8 h-8 rounded-lg bg-heritage-gold/20 border border-heritage-gold/50 flex items-center justify-center text-heritage-gold flex-shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center justify-between">
-                      <span class="text-[11px] font-mono text-heritage-gold uppercase tracking-wider">Identified Monument</span>
-                      <span class="text-[10px] font-mono text-emerald-400 font-bold">98.4% CONF</span>
-                    </div>
-                    <div class="font-serif text-xs font-bold text-white truncate">NYATAPOLA TEMPLE</div>
-                    <div class="text-[10px] text-slate-300 font-sans truncate">Built 1702 CE • King Bhupatindra Malla</div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            <!-- Phone Home Indicator Bar -->
-            <div class="w-32 h-1 bg-slate-600/60 rounded-full mx-auto mt-2"></div>
-          </div>
-
-        </div>
-
-      </div>
-
+    <div class="phone" aria-label="AR Heritage scan screen">
+      <div class="screen"><img src="./assets/scan_interface.jpeg" alt="The AR Heritage camera screen aimed at a temple" width="450" height="975" fetchpriority="high"></div>
     </div>
-  </section>
+  </div>
+</div>
 
-  <!-- Technical Validation Marquee -->
-  <section class="border-y border-heritage-gold/15 bg-heritage-onyx/70 py-6 overflow-hidden">
-    <div class="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-6 text-slate-400 text-xs font-mono">
-      <div class="flex items-center gap-2">
-        <span class="text-heritage-gold font-bold">CORE BENCHMARKS:</span>
+<section id="screens">
+  <div class="wrap split">
+    <div>
+      <div class="tabs" role="tablist" aria-label="App screens">
+        <button class="tab" role="tab" id="tab-scan" aria-selected="true" aria-controls="viewer" data-view="scan">Scan</button>
+        <button class="tab" role="tab" id="tab-detail" aria-selected="false" aria-controls="viewer" data-view="detail" tabindex="-1">History</button>
+        <button class="tab" role="tab" id="tab-facts" aria-selected="false" aria-controls="viewer" data-view="facts" tabindex="-1">Facts</button>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="text-white font-bold">TFLite Runtime:</span>
-        <span class="text-emerald-400">1.80 MB FlatBuffer</span>
+      <div class="phone" id="viewer" role="tabpanel" aria-labelledby="tab-scan">
+        <div class="screen"><img id="viewer-img" src="./assets/scan_interface.jpeg" alt="The scan screen with a gold viewfinder" width="450" height="975" loading="lazy"></div>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="text-white font-bold">Validation Accuracy:</span>
-        <span class="text-emerald-400">91.64% (n=718)</span>
+      <p class="caption" id="viewer-cap" aria-live="polite">Aim the camera. A match panel slides up when it is confident.</p>
+    </div>
+
+    <div class="features">
+      <h2>Aim. Match. Read the story.</h2>
+      <div>
+        <h3>Scan with your camera</h3>
+        <p>Frames are resized and analyzed in the background, so the camera view stays smooth. A match only appears above 80% confidence.</p>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="text-white font-bold">Mean Inference:</span>
-        <span class="text-emerald-400">~101 ms on Device</span>
+      <div>
+        <h3>Read it with no connection</h3>
+        <p>Each landmark has its builder, its dates, a note on how it fared in the 2015 earthquake, and a gallery of 10 photos you can pinch to zoom. All of it is stored in the app.</p>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="text-white font-bold">Architecture:</span>
-        <span class="text-heritage-gold-bright">EfficientNet &rarr; 4-Block Student CNN</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <span class="text-white font-bold">Pipeline Backend:</span>
-        <span class="text-amber-300">Anthropic Claude 3.5</span>
+      <div>
+        <h3>Keep what you find</h3>
+        <p>Bookmarks and your last 10 landmarks are saved on your phone. The app has no tracking and sends no usage data.</p>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Features & Visual Proof (Side-by-Side Layout) -->
-  <section id="features" class="py-24 relative z-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <!-- Section Header -->
-      <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
-        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-heritage-gold/10 text-heritage-gold text-xs font-mono uppercase tracking-widest border border-heritage-gold/25">
-          Features & Visual Proof
-        </div>
-        <h2 class="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">
-          Enterprise Vision. <br>
-          <span class="gold-gradient-text">Zero Connectivity Required.</span>
-        </h2>
-        <p class="text-slate-300 text-base sm:text-lg">
-          Designed specifically for cultural heritage preservation in brick-and-timber UNESCO heritage corridors where cellular reception is congested or absent.
-        </p>
-      </div>
+<section id="how-wrap">
+  <div class="wrap">
+    <details id="how">
+      <summary>How it works, and the numbers behind it</summary>
+      <div class="detail-body">
+        <p>A large EfficientNetB0 model was trained first. Its predictions were then used to teach a much smaller 4-block CNN (knowledge distillation, KL divergence loss, temperature 3.0). The small model is the one inside the app.</p>
 
-      <!-- Side-by-Side Main Layout -->
-      <div class="grid lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-        
-        <!-- Left Side: Interactive Mobile Phone Mockups (Scan Screen & Monument Details) -->
-        <div class="lg:col-span-6 relative">
-          
-          <!-- Mockup View Selector Tabs -->
-          <div class="flex items-center justify-center gap-2 mb-6">
-            <button onclick="switchMockupView('scan')" id="tab-btn-scan" class="px-4 py-2 rounded-lg text-xs font-mono font-medium border border-heritage-gold bg-heritage-gold/20 text-heritage-gold transition-all">
-              1. Scan Viewfinder
-            </button>
-            <button onclick="switchMockupView('detail')" id="tab-btn-detail" class="px-4 py-2 rounded-lg text-xs font-mono font-medium border border-white/10 bg-heritage-surface/60 text-slate-400 hover:text-white transition-all">
-              2. Monument Details
-            </button>
-            <button onclick="switchMockupView('facts')" id="tab-btn-facts" class="px-4 py-2 rounded-lg text-xs font-mono font-medium border border-white/10 bg-heritage-surface/60 text-slate-400 hover:text-white transition-all">
-              3. Architectural Facts
-            </button>
-          </div>
-
-          <!-- Dual Phone Showcase Grid -->
-          <div class="relative flex items-center justify-center min-h-[580px]">
-            
-            <!-- Primary Active Phone Mockup Frame -->
-            <div id="mockup-frame-main" class="relative z-20 w-[270px] sm:w-[290px] rounded-[44px] p-2.5 bg-gradient-to-b from-[#2e2920] via-[#1a1712] to-[#0d0e14] phone-mockup-frame transition-all duration-500">
-              <!-- Speaker & sensor -->
-              <div class="absolute top-5 left-1/2 -translate-x-1/2 w-24 h-3.5 bg-black rounded-full z-30 flex items-center justify-center">
-                <div class="w-8 h-1 bg-slate-800 rounded-full"></div>
-              </div>
-
-              <!-- Screen Display -->
-              <div class="relative w-full aspect-[9/19.5] rounded-[34px] overflow-hidden bg-black border border-heritage-gold/30">
-                <img id="mockup-img-main" src="./assets/scan_interface.jpeg" alt="AR Heritage UI Screen" class="w-full h-full object-cover transition-opacity duration-300">
-              </div>
-
-              <!-- Caption Tag -->
-              <div class="text-center py-2">
-                <span id="mockup-caption-main" class="text-[11px] font-mono text-heritage-gold uppercase tracking-wider">
-                  Live Viewfinder • Gold Reticle HUD
-                </span>
-              </div>
-            </div>
-
-            <!-- Secondary Offset Phone Mockup (Detail Preview) -->
-            <div id="mockup-frame-secondary" class="hidden sm:block absolute right-2 sm:right-6 top-8 z-10 w-[240px] rounded-[40px] p-2 bg-gradient-to-b from-[#241f17] to-[#0a0a0f] border border-heritage-gold/25 opacity-70 hover:opacity-100 hover:z-30 hover:scale-105 transition-all cursor-pointer shadow-2xl" onclick="switchMockupView('detail')">
-              <div class="relative w-full aspect-[9/19.5] rounded-[32px] overflow-hidden bg-black">
-                <img id="mockup-img-secondary" src="./assets/detail_nyatapola.jpeg" alt="Nyatapola Detail Screen" class="w-full h-full object-cover">
-              </div>
-              <div class="text-center py-1.5">
-                <span class="text-[10px] font-mono text-slate-300">Click to preview Details</span>
-              </div>
-            </div>
-
-          </div>
-
-          <div class="text-center text-xs font-mono text-slate-400 mt-4">
-            Direct unedited production screenshots extracted from the AR Heritage final release build (Appendix A).
-          </div>
-
-        </div>
-
-        <!-- Right Side: The 3 Core Feature Pillars -->
-        <div class="lg:col-span-6 space-y-8">
-          
-          <!-- Feature 1: Real-Time Camera Scanning -->
-          <div class="glass-card p-6 sm:p-8 rounded-2xl transition-all duration-300 group hover:-translate-y-1">
-            <div class="flex items-start gap-4">
-              <div class="w-12 h-12 rounded-xl bg-heritage-gold/15 border border-heritage-gold/40 flex items-center justify-center text-heritage-gold-bright flex-shrink-0 group-hover:scale-110 transition-transform">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-              </div>
-              <div class="space-y-2">
-                <div class="flex items-center justify-between">
-                  <h3 class="font-serif text-xl font-bold text-white group-hover:text-heritage-gold-bright transition-colors">Real-Time Camera Scanning</h3>
-                  <span class="text-[10px] font-mono bg-heritage-gold/10 text-heritage-gold px-2 py-0.5 rounded border border-heritage-gold/30">Background Isolate</span>
-                </div>
-                <p class="text-sm text-slate-300 leading-relaxed">
-                  Real-time camera viewfinder calibrated with custom heritage corner brackets and animated gold shutter ring. Image decoding, bilinear downscaling to 160&times;160, and float32 normalization execute in an independent Dart isolate (<code class="text-amber-200 text-xs">compute</code>), sustaining a locked 60 FPS UI.
-                </p>
-                <div class="pt-2 flex flex-wrap gap-2 text-[11px] font-mono text-slate-400">
-                  <span class="px-2 py-0.5 rounded bg-black/40 border border-white/5">&bull; 0.80 Confidence Threshold</span>
-                  <span class="px-2 py-0.5 rounded bg-black/40 border border-white/5">&bull; Animated Slide-up Match Panel</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Feature 2: Offline Heritage Catalog -->
-          <div class="glass-card p-6 sm:p-8 rounded-2xl transition-all duration-300 group hover:-translate-y-1">
-            <div class="flex items-start gap-4">
-              <div class="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/40 flex items-center justify-center text-amber-400 flex-shrink-0 group-hover:scale-110 transition-transform">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-              </div>
-              <div class="space-y-2">
-                <div class="flex items-center justify-between">
-                  <h3 class="font-serif text-xl font-bold text-white group-hover:text-amber-300 transition-colors">Offline Heritage Catalog</h3>
-                  <span class="text-[10px] font-mono bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30">100% Bundled JSON</span>
-                </div>
-                <p class="text-sm text-slate-300 leading-relaxed">
-                  Deep historical narratives, builder timelines (King Bhupatindra Malla, 1702 CE), architectural blueprints (Panchadewal Newari Pagoda), and 2015 Gorkha earthquake structural resilience records. Bundled directly into the app assets with instant local fallback caching.
-                </p>
-                <div class="pt-2 flex flex-wrap gap-2 text-[11px] font-mono text-slate-400">
-                  <span class="px-2 py-0.5 rounded bg-black/40 border border-white/5">&bull; 10-Photo High-Res Gallery</span>
-                  <span class="px-2 py-0.5 rounded bg-black/40 border border-white/5">&bull; Pinch-to-Zoom InteractiveViewer</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Feature 3: Local Bookmarking & Recents -->
-          <div class="glass-card p-6 sm:p-8 rounded-2xl transition-all duration-300 group hover:-translate-y-1">
-            <div class="flex items-start gap-4">
-              <div class="w-12 h-12 rounded-xl bg-heritage-gold/15 border border-heritage-gold/40 flex items-center justify-center text-heritage-gold flex-shrink-0 group-hover:scale-110 transition-transform">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
-              </div>
-              <div class="space-y-2">
-                <div class="flex items-center justify-between">
-                  <h3 class="font-serif text-xl font-bold text-white group-hover:text-heritage-gold transition-colors">Local Bookmarking & Recents</h3>
-                  <span class="text-[10px] font-mono bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/30">Privacy First</span>
-                </div>
-                <p class="text-sm text-slate-300 leading-relaxed">
-                  Persistent local bookmarks and an LRU recently-explored monument queue capped at 10 entries via SharedPreferences. Zero user tracking, zero remote telemetry, and zero battery drain while exploring the Durbar Square alleyways.
-                </p>
-                <div class="pt-2 flex flex-wrap gap-2 text-[11px] font-mono text-slate-400">
-                  <span class="px-2 py-0.5 rounded bg-black/40 border border-white/5">&bull; Instant Toggle State Feedback</span>
-                  <span class="px-2 py-0.5 rounded bg-black/40 border border-white/5">&bull; Persistent Cache Sync</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Technical Architecture Section (Crucial) -->
-  <section id="technical-architecture" class="py-24 bg-gradient-to-b from-heritage-obsidian via-heritage-onyx to-heritage-obsidian border-y border-heritage-gold/20 relative z-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <!-- Section Header -->
-      <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
-        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-mono border border-emerald-500/30">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          <span>EMPIRICAL BENCHMARKS & MODEL TOPOLOGY</span>
-        </div>
-        <h2 class="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">
-          Edge-AI Performance & <br>
-          <span class="gold-gradient-text">Knowledge Distillation.</span>
-        </h2>
-        <p class="text-slate-300 text-base sm:text-lg">
-          Compressing architectural feature extraction from heavy server vision into a 1.80 MB mobile model without sacrificing recognition confidence.
-        </p>
-      </div>
-
-      <!-- Core Metrics Triad (Explicit Final Report Metrics) -->
-      <div class="grid md:grid-cols-3 gap-6 mb-16">
-        
-        <!-- Metric 1: Accuracy -->
-        <div class="glass-card p-8 rounded-2xl relative overflow-hidden group">
-          <div class="absolute -right-8 -top-8 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
-          <div class="text-xs font-mono uppercase tracking-widest text-slate-400 mb-2">Model Classification Accuracy</div>
-          <div class="text-5xl lg:text-6xl font-mono font-extrabold text-white mb-3 flex items-baseline gap-1">
-            <span>91.64</span><span class="text-2xl text-emerald-400">%</span>
-          </div>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Validation set accuracy (<code class="text-heritage-gold">n = 718</code>) achieved by our distilled student CNN. Operates within <strong>2.37%</strong> of the heavy EfficientNetB0 teacher (94.01%), beating the 5% project acceptance threshold.
-          </p>
-          <div class="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-slate-400">
-            <span>Golden Gate F1: <strong class="text-white">0.9572</strong></span>
-            <span>Nyatapola F1: <strong class="text-white">0.9011</strong></span>
-          </div>
-        </div>
-
-        <!-- Metric 2: TFLite Footprint -->
-        <div class="glass-card p-8 rounded-2xl relative overflow-hidden group">
-          <div class="absolute -right-8 -top-8 w-32 h-32 bg-heritage-gold/10 rounded-full blur-2xl group-hover:bg-heritage-gold/20 transition-all"></div>
-          <div class="text-xs font-mono uppercase tracking-widest text-slate-400 mb-2">Quantized Mobile Footprint</div>
-          <div class="text-5xl lg:text-6xl font-mono font-extrabold text-white mb-3 flex items-baseline gap-1">
-            <span>1.80</span><span class="text-2xl text-heritage-gold">MB</span>
-          </div>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Total binary size of <code class="text-amber-200">ar_heritage_student_v4.tflite</code>. Converted with 100% output parity across validation checkpoints, with zero external server dependencies or API runtime requirements.
-          </p>
-          <div class="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-slate-400">
-            <span>Total Params: <strong class="text-white">471,843</strong></span>
-            <span>Input Size: <strong class="text-white">160&times;160&times;3</strong></span>
-          </div>
-        </div>
-
-        <!-- Metric 3: Latency -->
-        <div class="glass-card p-8 rounded-2xl relative overflow-hidden group">
-          <div class="absolute -right-8 -top-8 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all"></div>
-          <div class="text-xs font-mono uppercase tracking-widest text-slate-400 mb-2">On-Device Inference Latency</div>
-          <div class="text-5xl lg:text-6xl font-mono font-extrabold text-white mb-3 flex items-baseline gap-1">
-            <span>&lt;100</span><span class="text-2xl text-amber-400">ms</span>
-          </div>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Sub-100ms class inference budget. Empirically profiled on physical release Android hardware (<code class="text-amber-200">OPPO CPH2413</code>): pure model inference averages <strong>≈101 ms</strong> (range 95–111 ms) following warm-up.
-          </p>
-          <div class="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-slate-400">
-            <span>Warm-up runs: <strong class="text-white">2 runs</strong></span>
-            <span>Sensor FPS: <strong class="text-white">60 FPS locked</strong></span>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Teacher vs Student Distillation Architecture Comparison -->
-      <div class="glass-card rounded-2xl p-6 sm:p-8 mb-16 border border-heritage-gold/25">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <div>
-            <h3 class="font-serif text-2xl font-bold text-white">Teacher vs. Student Knowledge Distillation Topology</h3>
-            <p class="text-xs font-mono text-slate-400 mt-1">Hinton et al. Soft-Probability Transfer with Kullback-Leibler (KL) Divergence Loss</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="px-3 py-1 rounded bg-heritage-gold/15 text-heritage-gold text-xs font-mono border border-heritage-gold/30">
-              Acceptance Margin &lt; 5.0% (Achieved: 2.37%)
-            </span>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs font-mono">
-            <thead>
-              <tr class="border-b border-heritage-gold/20 text-heritage-gold uppercase tracking-wider bg-black/30">
-                <th class="py-3 px-4">Metric / Dimension</th>
-                <th class="py-3 px-4">Teacher Network (EfficientNetB0)</th>
-                <th class="py-3 px-4">Student Network (AR Heritage v4)</th>
-                <th class="py-3 px-4 text-right">Edge Efficiency Delta</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-white/5 text-slate-300">
-              <tr class="hover:bg-white/[0.02]">
-                <td class="py-3.5 px-4 font-semibold text-white">Validation Accuracy</td>
-                <td class="py-3.5 px-4">94.01%</td>
-                <td class="py-3.5 px-4 text-emerald-400 font-bold">91.64%</td>
-                <td class="py-3.5 px-4 text-right text-emerald-400 font-bold">-2.37% (Accepted)</td>
-              </tr>
-              <tr class="hover:bg-white/[0.02]">
-                <td class="py-3.5 px-4 font-semibold text-white">Total Parameter Count</td>
-                <td class="py-3.5 px-4 text-slate-400">~4,050,000 params</td>
-                <td class="py-3.5 px-4 text-heritage-gold font-bold">471,843 params</td>
-                <td class="py-3.5 px-4 text-right text-heritage-gold font-bold">8.6&times; Parameter Reduction</td>
-              </tr>
-              <tr class="hover:bg-white/[0.02]">
-                <td class="py-3.5 px-4 font-semibold text-white">Model File Size</td>
-                <td class="py-3.5 px-4 text-slate-400">16.2 MB</td>
-                <td class="py-3.5 px-4 text-heritage-gold font-bold">1.80 MB (.tflite)</td>
-                <td class="py-3.5 px-4 text-right text-heritage-gold font-bold">9.0&times; Storage Savings</td>
-              </tr>
-              <tr class="hover:bg-white/[0.02]">
-                <td class="py-3.5 px-4 font-semibold text-white">Input Tensor Shape</td>
-                <td class="py-3.5 px-4 text-slate-400">[1, 224, 224, 3] float32</td>
-                <td class="py-3.5 px-4 text-white font-mono">[1, 160, 160, 3] float32</td>
-                <td class="py-3.5 px-4 text-right text-white font-bold">49% Fewer Input Pixels</td>
-              </tr>
-              <tr class="hover:bg-white/[0.02]">
-                <td class="py-3.5 px-4 font-semibold text-white">On-Device RAM Budget</td>
-                <td class="py-3.5 px-4 text-red-400/80">Prohibitive for background thread</td>
-                <td class="py-3.5 px-4 text-emerald-400 font-bold">&lt;14 MB Peak Allocated</td>
-                <td class="py-3.5 px-4 text-right text-emerald-400 font-bold">Zero UI Stutter</td>
-              </tr>
-              <tr class="hover:bg-white/[0.02]">
-                <td class="py-3.5 px-4 font-semibold text-white">Loss Function</td>
-                <td class="py-3.5 px-4 text-slate-400">Categorical Cross-Entropy</td>
-                <td class="py-3.5 px-4 text-heritage-gold-bright font-mono">KL Divergence Loss (T=3.0)</td>
-                <td class="py-3.5 px-4 text-right text-heritage-gold-bright">Soft Probabilities Transfer</td>
-              </tr>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th scope="col">Measure</th><th scope="col">Teacher (EfficientNetB0)</th><th scope="col">In the app</th></tr></thead>
+            <tbody>
+              <tr><td>Validation accuracy</td><td>94.01%</td><td>91.64%</td></tr>
+              <tr><td>Parameters</td><td>about 4.05 million</td><td>471,843 (8.6 times fewer)</td></tr>
+              <tr><td>File size</td><td>16.2 MB</td><td>1.80 MB (9 times smaller)</td></tr>
+              <tr><td>Input size</td><td>224 x 224</td><td>160 x 160 (49% fewer pixels)</td></tr>
             </tbody>
           </table>
         </div>
+
+        <p>Per landmark on the validation set: Golden Gate 246 of 252 correct (F1 0.9572), Nyatapola Temple 196 of 220 correct (F1 0.9011). Latency was measured on one device, an OPPO CPH2413, after two warm-up runs. Real-world accuracy in poor light or crowds has not been measured yet.</p>
+
+        <div class="figs">
+          <figure>
+            <img src="./assets/training_history.png" alt="Training and validation curves over 64 epochs" width="800" height="500" loading="lazy">
+            <figcaption>Training curves, 64 epochs. Validation loss falls from 7.15 to 1.09.</figcaption>
+          </figure>
+          <figure>
+            <img src="./assets/confusion_matrix.png" alt="Confusion matrix for the three landmark classes" width="800" height="500" loading="lazy">
+            <figcaption>Confusion matrix on 718 validation images.</figcaption>
+          </figure>
+        </div>
+
+        <p>The landmark text in the app was drafted from archaeological sources with Claude (Anthropic) and structured into <code>monuments.json</code>. Treat it as a guide and check dates against primary sources before you cite them.</p>
       </div>
+    </details>
+  </div>
+</section>
 
-      <!-- Empirical Charts & Architecture Pipeline (Real Visual Evidence) -->
-      <div class="grid lg:grid-cols-2 gap-8 items-start">
-        
-        <!-- Left Visual: Training History & Distillation Loss -->
-        <div class="glass-card p-6 rounded-2xl border border-heritage-gold/20 space-y-4">
-          <div class="flex items-center justify-between">
-            <div>
-              <span class="text-xs font-mono text-heritage-gold uppercase tracking-wider block">Figure 4.1 from Final Report</span>
-              <h4 class="font-serif text-lg font-bold text-white">Student Distillation v4 Training Trajectory</h4>
-            </div>
-            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">64 Epochs</span>
-          </div>
-          <div class="rounded-xl overflow-hidden bg-black/60 border border-white/10 p-2">
-            <img src="./assets/training_history.png" alt="Student Distillation v4 Training Curves" class="w-full h-auto object-contain rounded-lg">
-          </div>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Validation curves demonstrate monotonic distillation convergence: loss drops from 7.15 to 1.09, while AUC surpasses 0.98. The 4-block CNN learns fine Newari architectural cues directly from the teacher's probability distribution.
-          </p>
-        </div>
-
-        <!-- Right Visual: Confusion Matrix & Classification Breakdown -->
-        <div class="glass-card p-6 rounded-2xl border border-heritage-gold/20 space-y-4">
-          <div class="flex items-center justify-between">
-            <div>
-              <span class="text-xs font-mono text-heritage-gold uppercase tracking-wider block">Figure 4.2 from Final Report</span>
-              <h4 class="font-serif text-lg font-bold text-white">Student v4 Confusion Matrix (3-Class)</h4>
-            </div>
-            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-heritage-gold/10 text-heritage-gold border border-heritage-gold/30">n = 718 Validation</span>
-          </div>
-          <div class="rounded-xl overflow-hidden bg-white/95 border border-white/10 p-2 flex justify-center">
-            <img src="./assets/confusion_matrix.png" alt="Student Model Confusion Matrix" class="max-h-[290px] w-auto object-contain rounded-lg">
-          </div>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Evaluation shows extraordinary discriminative power: <strong>Golden Gate</strong> achieved 246/252 correct predictions (<code class="text-emerald-400">F1 = 0.9572</code>), while <strong>Nyatapola Temple</strong> scored 196/220 (<code class="text-emerald-400">F1 = 0.9011</code>).
-          </p>
-        </div>
-
+<section id="download">
+  <div class="wrap download">
+    <div style="display:grid;gap:1rem;align-content:start">
+      <h2>Install the beta</h2>
+      <p class="muted" style="max-width:30rem">The app is not on Google Play yet, so you install the file directly. Android will ask you to allow that once.</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="./downloads/ar_heritage_v1.0_beta.apk" download="ar_heritage_v1.0_beta.apk">Download APK (80.5 MB)</a>
+        <button class="btn" type="button" id="open-beta-2">Get beta updates</button>
       </div>
-
-      <!-- Component Architecture Pipeline Diagram -->
-      <div class="mt-8 glass-card p-6 sm:p-8 rounded-2xl border border-heritage-gold/20">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <span class="text-xs font-mono text-heritage-gold uppercase tracking-wider block">Figure 3.7 & 3.9 System Topology</span>
-            <h4 class="font-serif text-xl font-bold text-white">On-Device Decoupled Layer Architecture</h4>
-          </div>
-          <span class="text-xs font-mono text-slate-400">Dart Isolates &bull; TFLite C++ Runtime &bull; Zero Server Round-Trip</span>
-        </div>
-        <div class="rounded-xl overflow-hidden bg-white/95 p-4 border border-white/20">
-          <img src="./assets/component_architecture.png" alt="AR Heritage Component Architecture" class="w-full max-h-[360px] object-contain mx-auto">
-        </div>
-      </div>
-
+      <!-- TODO: paste the real SHA-256 of the APK, then remove the hidden attribute. -->
+      <p class="hash" hidden>SHA-256: REPLACE_WITH_APK_SHA256</p>
     </div>
-  </section>
+    <ol class="steps">
+      <li>Download the APK on your phone.</li>
+      <li>Open it. When Android blocks the install, choose Settings and allow installs from your browser or Files app.</li>
+      <li>Open AR Heritage and allow camera access. That is the only permission it needs.</li>
+    </ol>
+  </div>
+</section>
 
-  <!-- Generative AI Pipeline Section (Claude / Anthropic Focus) -->
-  <section id="claude-pipeline" class="py-24 relative z-10 overflow-hidden">
-    
-    <!-- Subtle glow backdrop -->
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-amber-600/5 rounded-full blur-[160px] pointer-events-none"></div>
+</main>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <!-- Section Header -->
-      <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
-        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-heritage-gold/10 text-heritage-gold-bright text-xs font-mono border border-heritage-gold/30">
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-          <span>CLAUDE-ASSISTED DATA PIPELINE</span>
-        </div>
-        <h2 class="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">
-          Generative AI Pipeline: <br>
-          <span class="gold-gradient-text">Structuring Centuries of History.</span>
-        </h2>
-        <p class="text-slate-300 text-base sm:text-lg">
-          How we leverage <strong>Claude (Anthropic's frontier AI)</strong> on the backend to process, structure, and sanitize dense, unstructured historical texts into the highly-optimized offline JSON catalogs that the mobile application relies on.
-        </p>
-      </div>
-
-      <!-- Pipeline Steps Grid -->
-      <div class="grid md:grid-cols-4 gap-6 mb-16">
-        
-        <!-- Step 1 -->
-        <div class="glass-card p-6 rounded-2xl relative border-t-2 border-t-amber-500/40">
-          <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-heritage-gold font-mono font-bold text-xs flex items-center justify-center mb-4">01</div>
-          <h4 class="font-serif text-base font-bold text-white mb-2">Unstructured Ingestion</h4>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Ingestion of dense archaeological monographs, Department of Archaeology bulletins, and Malla-era Sanskrit/Nepal Bhasa epigraphic field logs.
-          </p>
-        </div>
-
-        <!-- Step 2 -->
-        <div class="glass-card p-6 rounded-2xl relative border-t-2 border-t-heritage-gold">
-          <div class="w-8 h-8 rounded-lg bg-heritage-gold/10 text-heritage-gold-bright font-mono font-bold text-xs flex items-center justify-center mb-4">02</div>
-          <h4 class="font-serif text-base font-bold text-white mb-2">Claude Deep Synthesis</h4>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Anthropic Claude extracts factual chronologies, architectural terminology (e.g. <em>Panchadewal</em>), builder lineages, and seismic damage reports from source texts into structured fields.
-          </p>
-        </div>
-
-        <!-- Step 3 -->
-        <div class="glass-card p-6 rounded-2xl relative border-t-2 border-t-emerald-500/40">
-          <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center mb-4">03</div>
-          <h4 class="font-serif text-base font-bold text-white mb-2">Schema Sanitization</h4>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Claude parses and validates output against strict Pydantic/Dart data contracts: key highlights, localized Nepali typography, and verified hex color palettes.
-          </p>
-        </div>
-
-        <!-- Step 4 -->
-        <div class="glass-card p-6 rounded-2xl relative border-t-2 border-t-blue-500/40">
-          <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 font-mono font-bold text-xs flex items-center justify-center mb-4">04</div>
-          <h4 class="font-serif text-base font-bold text-white mb-2">Offline JSON Bundling</h4>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            Compiled into ultra-lightweight <code class="text-heritage-gold">monuments.json</code> bundled inside the Flutter asset cache, ready for millisecond lookup without cellular connection.
-          </p>
-        </div>
-
-      </div>
-
-      <!-- Interactive Code & JSON Schema Explorer -->
-      <div class="glass-card rounded-2xl overflow-hidden border border-heritage-gold/30">
-        
-        <!-- Header Bar -->
-        <div class="bg-black/50 px-6 py-4 border-b border-heritage-gold/20 flex flex-wrap items-center justify-between gap-4">
-          <div class="flex items-center gap-3">
-            <div class="flex gap-1.5">
-              <span class="w-3 h-3 rounded-full bg-red-500/80"></span>
-              <span class="w-3 h-3 rounded-full bg-yellow-500/80"></span>
-              <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
-            </div>
-            <span class="text-xs font-mono text-heritage-gold font-semibold">pipeline/claude_heritage_sanitizer.py &rarr; assets/data/monuments.json</span>
-          </div>
-
-          <!-- Code View Toggle -->
-          <div class="flex items-center gap-2">
-            <button onclick="togglePipelineTab('json')" id="tab-btn-json" class="px-3 py-1 rounded text-xs font-mono bg-heritage-gold/20 text-heritage-gold border border-heritage-gold/40">
-              monuments.json (Output)
-            </button>
-            <button onclick="togglePipelineTab('prompt')" id="tab-btn-prompt" class="px-3 py-1 rounded text-xs font-mono bg-black/40 text-slate-400 border border-white/10 hover:text-white">
-              Claude Extraction Prompt
-            </button>
-          </div>
-        </div>
-
-        <!-- Code Content View -->
-        <div class="p-6 font-mono text-xs overflow-x-auto bg-[#07080c] leading-relaxed">
-          
-          <!-- View 1: Real monuments.json -->
-          <div id="pipeline-content-json">
-<pre class="text-slate-300"><span class="text-slate-500">// Sanitized by Anthropic Claude &bull; Bundled in AR Heritage production build</span>
-[
-  {
-    <span class="text-amber-300">"id"</span>: <span class="text-emerald-300">"nyatapola_temple"</span>,
-    <span class="text-amber-300">"name"</span>: <span class="text-emerald-300">"Nyatapola Temple"</span>,
-    <span class="text-amber-300">"nepali_name"</span>: <span class="text-heritage-gold">"न्यातापोला मन्दिर"</span>,
-    <span class="text-amber-300">"architecture_style"</span>: <span class="text-emerald-300">"Newari Pagoda (Panchadewal)"</span>,
-    <span class="text-amber-300">"built_year"</span>: <span class="text-emerald-300">"1702 CE"</span>,
-    <span class="text-amber-300">"built_by"</span>: <span class="text-emerald-300">"King Bhupatindra Malla"</span>,
-    <span class="text-amber-300">"height_label"</span>: <span class="text-emerald-300">"30.5 m"</span>,
-    <span class="text-amber-300">"full_history"</span>: <span class="text-slate-300">"Built in 1702 by King Bhupatindra Malla in just seven months, Nyatapola is dedicated to the goddess Siddhi Lakshmi. Each of its five terraced plinths is guarded by a pair of figures — wrestlers, elephants, lions, griffins, and goddesses — each pair believed to be ten times more powerful than the one below. The temple survived the 2015 Gorkha earthquake with only minor damage, a testament to its masterful Newari earthquake-resistant construction."</span>,
-    <span class="text-amber-300">"earthquake_note"</span>: <span class="text-slate-300">"Sustained only superficial plaster cracks in the 2015 earthquake. Restoration completed by 2017."</span>,
-    <span class="text-amber-300">"highlights"</span>: [
-      <span class="text-emerald-300">"30 m tall – tallest pagoda in Nepal"</span>,
-      <span class="text-emerald-300">"5 guardian pairs on ascending terraces"</span>,
-      <span class="text-emerald-300">"Dedicated to Tantric goddess Siddhi Lakshmi"</span>,
-      <span class="text-emerald-300">"Built in under 7 months"</span>,
-      <span class="text-emerald-300">"UNESCO World Heritage Site component"</span>
-    ]
-  }
-]</pre>
-          </div>
-
-          <!-- View 2: Prompt Specification -->
-          <div id="pipeline-content-prompt" class="hidden">
-<pre class="text-slate-300"><span class="text-slate-500"># System Prompt for Claude 3.5 Sonnet Cultural Extraction Engine</span>
-system_prompt = <span class="text-emerald-300">"""
-You are an expert Nepalese architectural historian and computational taxonomist.
-Ingest unstructured field excavation reports and historical chronicles for Bhaktapur monuments.
-Extract and sanitize into strict JSON complying with the AR Heritage mobile schema:
-- Normalize Newari architectural terminology (e.g., Panchadewal, Repoussé, Torana).
-- Retain exact historical consensus dates (CE) and Malla dynasty royal lineages.
-- Extract concise, bulleted key structural facts for mobile viewport cards.
-- Format earthquake resilience records from the 1934 and 2015 Gorkha events.
-- Never invent dates or speculative folklore; output 100% verified historical schema.
-"""</span></pre>
-          </div>
-
-        </div>
-
-        <!-- Footer Bar -->
-        <div class="bg-black/30 px-6 py-3 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-slate-400">
-          <span class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span>Schema Status: Validated by Pydantic &bull; 0 Parse Exceptions</span>
-          </span>
-          <span class="text-heritage-gold">Bundled directly in Flutter Assets</span>
-        </div>
-
-      </div>
-
+<footer>
+  <div class="wrap">
+    <div>
+      <p class="strong">AR Heritage v1.0 beta</p>
+      <p>Offline landmark recognition for Bhaktapur, Nepal.</p>
+      <p>&copy; 2026 Sulu Heritage Tech</p>
     </div>
-  </section>
+    <ul>
+      <li class="strong">Project</li>
+      <li>Bhaktapur Multiple Campus</li>
+      <li>Tribhuvan University affiliated</li>
+      <li><a href="https://github.com/sachinsulu/ar_heritage" target="_blank" rel="noopener noreferrer">Source on GitHub</a></li>
+    </ul>
+    <ul>
+      <li class="strong">Contact</li>
+      <li>Sachin Sulu, lead AI engineer</li>
+      <li><a href="mailto:sachin.sulu324@gmail.com">sachin.sulu324@gmail.com</a></li>
+      <li><a href="https://github.com/sachinsulu" target="_blank" rel="noopener noreferrer">GitHub profile</a></li>
+    </ul>
+  </div>
+</footer>
 
-  <!-- Field Proof & Physical Validation Section -->
-  <section id="field-proof" class="py-24 bg-heritage-onyx/50 border-t border-heritage-gold/15 relative z-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-heritage-surface text-heritage-gold text-xs font-mono border border-heritage-gold/30">
-          FIELD VERIFICATION IN NEPAL
-        </div>
-        <h2 class="font-serif text-3xl sm:text-4xl font-bold text-white tracking-tight">
-          Field-Tested in Real World Conditions
-        </h2>
-        <p class="text-slate-300 text-base">
-          Evaluated in high-glare noon sunlight, monsoon overcast conditions, and crowded festival days (Bisket Jatra) at Taumadhi Square.
-        </p>
-      </div>
+<dialog id="beta" aria-labelledby="beta-title">
+  <div class="box">
+    <button class="x" type="button" id="beta-close" aria-label="Close">&times;</button>
+    <h2 id="beta-title">Get beta updates</h2>
+    <p class="muted">We email you when there is a new build or a new landmark. Nothing else.</p>
 
-      <!-- Field Cards Grid -->
-      <div class="grid md:grid-cols-3 gap-8">
-        
-        <div class="glass-card p-6 rounded-2xl border border-heritage-gold/20 space-y-4">
-          <div class="w-full aspect-[4/3] rounded-xl overflow-hidden bg-black/40">
-            <img src="./assets/detail_facts.jpeg" alt="Field Photo Gallery" class="w-full h-full object-cover">
-          </div>
-          <div>
-            <h4 class="font-serif text-lg font-bold text-white">Full-Resolution Photo Gallery</h4>
-            <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-              Equipped with 10 high-resolution historical perspectives and zoomable archival photos from 1894 to present day.
-            </p>
-          </div>
-        </div>
+    <form id="beta-form" action="https://formspree.io/f/xaeqpzlw" method="POST" style="display:grid;gap:1rem">
+      <input class="trap" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <label>Name<input type="text" name="name" autocomplete="name" required></label>
+      <label>Email<input type="email" name="email" autocomplete="email" inputmode="email" required></label>
+      <label>What brings you here
+        <select name="interest">
+          <option value="general">Just curious</option>
+          <option value="research">Research</option>
+          <option value="pilot">Tourism or municipal pilot</option>
+          <option value="apk-tester">Android tester</option>
+        </select>
+      </label>
+      <p class="err" id="beta-error" role="alert" hidden></p>
+      <button class="btn btn-primary" id="beta-submit" type="submit">Send me updates</button>
+    </form>
 
-        <div class="glass-card p-6 rounded-2xl border border-heritage-gold/20 space-y-4">
-          <div class="w-full aspect-[4/3] rounded-xl overflow-hidden bg-black/40">
-            <img src="./assets/gallery_viewer.jpeg" alt="Taumadhi Square Detail" class="w-full h-full object-cover">
-          </div>
-          <div>
-            <h4 class="font-serif text-lg font-bold text-white">Interactive Pinch-to-Zoom</h4>
-            <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-              Inspect intricate wood carvings, multi-tiered strut reliefs, and guardian plinth statues with zero pixelation lag.
-            </p>
-          </div>
-        </div>
-
-        <div class="glass-card p-6 rounded-2xl border border-heritage-gold/20 space-y-4">
-          <div class="w-full aspect-[4/3] rounded-xl overflow-hidden bg-black/40">
-            <img src="./assets/home_screen.jpeg" alt="The Heritage of Nepal Home Screen" class="w-full h-full object-cover">
-          </div>
-          <div>
-            <h4 class="font-serif text-lg font-bold text-white">Editorial Exploration Feed</h4>
-            <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-              Curated editorial typography celebrating Nepal’s architecture with instant jump-points to recently discovered landmarks.
-            </p>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Download & Beta Application Call To Action Section -->
-  <section class="py-20 relative z-10 bg-gradient-to-b from-heritage-obsidian via-[#14120c] to-heritage-obsidian border-t border-heritage-gold/30">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
-      
-      <div class="w-16 h-16 rounded-2xl bg-heritage-gold/15 border border-heritage-gold/50 mx-auto flex items-center justify-center p-2 shadow-gold-glow">
-        <img src="./assets/app_icon.png" alt="AR Heritage Pagoda Icon" class="w-full h-full object-contain">
-      </div>
-
-      <div class="space-y-4 max-w-2xl mx-auto">
-        <h2 class="font-serif text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-          Ready to Deploy Edge Vision for <br>
-          <span class="gold-gradient-text">Cultural Preservation?</span>
-        </h2>
-        <p class="text-slate-300 text-base">
-          Experience our offline-first Flutter application now, or join our enterprise waitlist for expanded landmark models across Kathmandu Valley.
-        </p>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-        <button onclick="openBetaModal()" class="w-full sm:w-auto px-8 py-4 rounded-xl font-bold text-sm text-black uppercase tracking-wider bg-gradient-to-r from-heritage-gold-bright via-heritage-gold to-heritage-gold-dark hover:brightness-110 shadow-gold-glow flex items-center justify-center gap-3 transition-transform active:scale-95">
-          <span>Join the Beta Program</span>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-        </button>
-
-        <a href="./downloads/ar_heritage_v1.0_beta.apk" download="ar_heritage_v1.0_beta.apk" class="w-full sm:w-auto px-7 py-4 rounded-xl font-semibold text-sm text-slate-200 bg-heritage-surface hover:bg-heritage-card border border-heritage-gold/40 flex items-center justify-center gap-3 transition-colors">
-          <svg class="w-5 h-5 text-heritage-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          <span>Download Android APK (80.5 MB)</span>
-        </a>
-      </div>
-
-      <div class="text-xs font-mono text-slate-400">
-        Requires Android 8.0 (API Level 26) or newer &bull; Camera hardware permission required for real-time edge scanning.
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Startup Footer -->
-  <footer class="bg-black border-t border-heritage-gold/20 py-16 relative z-10 text-slate-400 text-xs">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
-        
-        <!-- Brand Info -->
-        <div class="space-y-4 md:col-span-1">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-heritage-surface border border-heritage-gold/30 p-1">
-              <img src="./assets/app_icon.png" alt="AR Heritage" class="w-full h-full object-contain">
-            </div>
-            <span class="font-serif font-bold text-sm text-white tracking-wider">AR HERITAGE</span>
-          </div>
-          <p class="text-slate-400 text-xs leading-relaxed">
-            High-precision on-device edge AI and computer vision for instant cultural monument identification in Nepal.
-          </p>
-          <div class="text-amber-200/80 font-mono text-[11px]">
-            &copy; 2026 Sulu Heritage Tech. <br>All rights reserved.
-          </div>
-        </div>
-
-        <!-- Technical Links -->
-        <div class="space-y-3">
-          <div class="font-mono text-xs uppercase tracking-wider text-white font-bold">Edge AI Technology</div>
-          <ul class="space-y-2">
-            <li><a href="#technical-architecture" class="hover:text-heritage-gold transition-colors">EfficientNet Teacher Model</a></li>
-            <li><a href="#technical-architecture" class="hover:text-heritage-gold transition-colors">Knowledge Distillation Loss</a></li>
-            <li><a href="#technical-architecture" class="hover:text-heritage-gold transition-colors">TensorFlow Lite 1.80 MB Binary</a></li>
-            <li><a href="#claude-pipeline" class="hover:text-heritage-gold transition-colors">Claude Structured Pipeline</a></li>
-          </ul>
-        </div>
-
-        <!-- Project & Organization -->
-        <div class="space-y-3">
-          <div class="font-mono text-xs uppercase tracking-wider text-white font-bold">Initiative & Research</div>
-          <ul class="space-y-2">
-            <li><span class="text-slate-300">Bhaktapur Multiple Campus</span></li>
-            <li><span class="text-slate-300">Tribhuvan University Affiliated</span></li>
-            <li><a href="https://github.com/sachinsulu/ar_heritage" target="_blank" rel="noopener noreferrer" class="hover:text-heritage-gold transition-colors flex items-center gap-1">
-              <span>GitHub Repository</span>
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-            </a></li>
-          </ul>
-        </div>
-
-        <!-- Developer & Contact -->
-        <div class="space-y-3">
-          <div class="font-mono text-xs uppercase tracking-wider text-white font-bold">Founder & Contact</div>
-          <ul class="space-y-2">
-            <li>
-              <a href="https://github.com/sachinsulu" target="_blank" rel="noopener noreferrer" class="hover:text-heritage-gold transition-colors flex items-center gap-1 text-slate-300">
-                <span class="font-bold text-white">Sachin Sulu</span> (Lead AI Engineer)
-              </a>
-            </li>
-            <li>
-              <a href="mailto:sachin.sulu324@gmail.com" class="hover:text-heritage-gold transition-colors">
-                sachin.sulu324@gmail.com
-              </a>
-            </li>
-            <li>
-              <span class="text-slate-400">Bhaktapur, Bagmati Province, Nepal</span>
-            </li>
-            <li class="pt-2">
-              <a href="https://github.com/sachinsulu" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-heritage-surface border border-white/10 hover:border-heritage-gold text-slate-300 text-xs font-mono transition-colors">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-                <span>Developer Portfolio & GitHub</span>
-              </a>
-            </li>
-          </ul>
-        </div>
-
-      </div>
-
-      <div class="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] font-mono text-slate-400">
-        <div>
-          &copy; 2026 Sulu Heritage Tech &bull; AR Heritage v1.0 beta
-        </div>
-        <div class="flex items-center gap-4">
-          <a href="#technical-architecture" class="hover:text-white transition-colors">Model Metrics</a>
-          <span>&bull;</span>
-          <a href="#claude-pipeline" class="hover:text-white transition-colors">Claude Pipeline</a>
-          <span>&bull;</span>
-          <a href="./downloads/ar_heritage_v1.0_beta.apk" download="ar_heritage_v1.0_beta.apk" class="hover:text-white transition-colors">APK Download</a>
-        </div>
-      </div>
-
-    </div>
-  </footer>
-
-  <!-- Beta Registration Modal -->
-  <div id="beta-modal" role="dialog" aria-modal="true" aria-labelledby="beta-title" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-    <div class="relative w-full max-w-md rounded-2xl p-6 sm:p-8 bg-heritage-surface border border-heritage-gold/40 shadow-gold-glow-lg text-slate-200">
-      
-      <!-- Close Button -->
-      <button onclick="closeBetaModal()" aria-label="Close dialog" class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-
-      <div class="space-y-4">
-        <div class="w-12 h-12 rounded-xl bg-heritage-gold/15 border border-heritage-gold/30 flex items-center justify-center p-2 text-heritage-gold">
-          <img src="./assets/app_icon.png" alt="AR Heritage" class="w-full h-full object-contain">
-        </div>
-        <div>
-          <h3 id="beta-title" class="font-serif text-xl font-bold text-white">Join AR Heritage Beta</h3>
-          <p class="text-xs text-slate-400 mt-1">Get notified about new APK builds and new monument models.</p>
-        </div>
-
-        <form id="beta-form" action="https://formspree.io/f/xaeqpzlw" method="POST" onsubmit="handleBetaSubmit(event)" class="space-y-4 pt-2">
-          <!-- Honeypot: hidden from humans, bots fill it in -->
-          <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="absolute -left-[9999px] w-px h-px opacity-0">
-          <div>
-            <label class="block text-xs font-mono text-amber-200 mb-1" for="beta-name">Full Name</label>
-            <input type="text" id="beta-name" name="name" required placeholder="Your name" class="w-full px-3.5 py-2.5 rounded-lg bg-black/50 border border-white/10 focus:border-heritage-gold focus:outline-none text-xs text-white">
-          </div>
-          <div>
-            <label class="block text-xs font-mono text-amber-200 mb-1" for="beta-email">Email</label>
-            <input type="email" id="beta-email" name="email" required placeholder="you@example.com" class="w-full px-3.5 py-2.5 rounded-lg bg-black/50 border border-white/10 focus:border-heritage-gold focus:outline-none text-xs text-white">
-          </div>
-          <div>
-            <label class="block text-xs font-mono text-amber-200 mb-1" for="beta-interest">Primary Interest</label>
-            <select id="beta-interest" name="interest" class="w-full px-3.5 py-2.5 rounded-lg bg-black/50 border border-white/10 focus:border-heritage-gold focus:outline-none text-xs text-white">
-              <option value="general">General interest</option>
-              <option value="research">Cultural Heritage & Computer Vision Research</option>
-              <option value="pilot">Municipal / Tourism Board Pilot</option>
-              <option value="apk-tester">Field Tester / Android Beta</option>
-            </select>
-          </div>
-          <p id="beta-error" role="alert" class="hidden text-xs font-mono text-red-300"></p>
-          <button id="beta-submit" type="submit" class="w-full py-3 rounded-lg font-bold text-xs uppercase tracking-wider text-black bg-gradient-to-r from-heritage-gold-bright via-heritage-gold to-heritage-gold-dark hover:brightness-110 shadow-gold-glow transition-all disabled:opacity-60 disabled:cursor-not-allowed">
-            Join the Beta
-          </button>
-        </form>
-
-        <div id="beta-success" class="hidden p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-mono text-center">
-          Thank you! Your beta request has been registered. Our team at Sulu Heritage Tech will reach out shortly.
-        </div>
-      </div>
-
+    <div class="ok" id="beta-ok" role="status" hidden>
+      You're on the list. We'll write to you when there is a new build.
+      <div style="margin-top:.75rem"><button class="btn btn-sm" type="button" id="beta-done">Close</button></div>
     </div>
   </div>
+</dialog>
 
-  <!-- Client-Side Scripts for Interactivity -->
-  <script>
-    // Interactive Mockup Tab Switching
-    const mockupData = {
-      scan: {
-        img: './assets/scan_interface.jpeg',
-        caption: 'Live Viewfinder • Gold Reticle HUD'
-      },
-      detail: {
-        img: './assets/detail_nyatapola.jpeg',
-        caption: 'Nyatapola Detail Screen • 1702 CE Narrative'
-      },
-      facts: {
-        img: './assets/detail_facts.jpeg',
-        caption: 'Architectural Facts & Photo Gallery'
-      }
-    };
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-    function switchMockupView(viewKey) {
-      const data = mockupData[viewKey];
-      if (!data) return;
+  /* Screen viewer: decode the next image first, then swap. A newer click cancels an older one. */
+  const views = {
+    scan:   { src: './assets/scan_interface.jpeg',   alt: 'The scan screen with a gold viewfinder', cap: 'Aim the camera. A match panel slides up when it is confident.' },
+    detail: { src: './assets/detail_nyatapola.jpeg', alt: 'The Nyatapola Temple history screen',     cap: 'Nyatapola Temple: built in 1702, with its full story.' },
+    facts:  { src: './assets/detail_facts.jpeg',     alt: 'Architectural facts and photo gallery',   cap: 'Architectural facts and a 10-photo gallery.' }
+  };
+  const tabs = [...document.querySelectorAll('.tab')];
+  const img = $('viewer-img'), cap = $('viewer-cap'), panel = $('viewer');
+  let token = 0;
 
-      const mainImg = document.getElementById('mockup-img-main');
-      const caption = document.getElementById('mockup-caption-main');
-
-      mainImg.style.opacity = '0';
-      setTimeout(() => {
-        mainImg.src = data.img;
-        caption.innerText = data.caption;
-        mainImg.style.opacity = '1';
-      }, 150);
-
-      // Update Tab Styles
-      ['scan', 'detail', 'facts'].forEach(key => {
-        const btn = document.getElementById(`tab-btn-${key}`);
-        if (key === viewKey) {
-          btn.className = 'px-4 py-2 rounded-lg text-xs font-mono font-medium border border-heritage-gold bg-heritage-gold/20 text-heritage-gold transition-all';
-        } else {
-          btn.className = 'px-4 py-2 rounded-lg text-xs font-mono font-medium border border-white/10 bg-heritage-surface/60 text-slate-400 hover:text-white transition-all';
-        }
-      });
-    }
-
-    // Toggle Claude Pipeline code tabs
-    function togglePipelineTab(tab) {
-      const jsonContent = document.getElementById('pipeline-content-json');
-      const promptContent = document.getElementById('pipeline-content-prompt');
-      const btnJson = document.getElementById('tab-btn-json');
-      const btnPrompt = document.getElementById('tab-btn-prompt');
-
-      if (tab === 'json') {
-        jsonContent.classList.remove('hidden');
-        promptContent.classList.add('hidden');
-        btnJson.className = 'px-3 py-1 rounded text-xs font-mono bg-heritage-gold/20 text-heritage-gold border border-heritage-gold/40';
-        btnPrompt.className = 'px-3 py-1 rounded text-xs font-mono bg-black/40 text-slate-400 border border-white/10 hover:text-white';
-      } else {
-        jsonContent.classList.add('hidden');
-        promptContent.classList.remove('hidden');
-        btnPrompt.className = 'px-3 py-1 rounded text-xs font-mono bg-heritage-gold/20 text-heritage-gold border border-heritage-gold/40';
-        btnJson.className = 'px-3 py-1 rounded text-xs font-mono bg-black/40 text-slate-400 border border-white/10 hover:text-white';
-      }
-    }
-
-    // Modal Controls
-    // Set this to your form backend, e.g. 'https://formspree.io/f/xxxxxxx'.
-    // While empty, the form shows an error instead of pretending to succeed.
-    const BETA_FORM_ENDPOINT = 'https://formspree.io/f/xaeqpzlw';
-
-    function openBetaModal() {
-      document.getElementById('beta-modal').classList.remove('hidden');
-      document.getElementById('beta-name').focus();
-    }
-    function closeBetaModal() {
-      document.getElementById('beta-modal').classList.add('hidden');
-    }
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeBetaModal();
+  async function show(key) {
+    const v = views[key], t = ++token;
+    tabs.forEach((b) => {
+      const on = b.dataset.view === key;
+      b.setAttribute('aria-selected', on);
+      b.tabIndex = on ? 0 : -1;
     });
-    document.getElementById('beta-modal').addEventListener('click', (e) => {
-      if (e.target.id === 'beta-modal') closeBetaModal();
-    });
-
-    async function handleBetaSubmit(e) {
+    panel.setAttribute('aria-labelledby', 'tab-' + key);
+    const next = new Image();
+    next.src = v.src;
+    try { await next.decode(); } catch (e) { /* show it anyway */ }
+    if (t !== token) return;
+    img.classList.add('out');
+    await sleep(reduce.matches ? 0 : 120);
+    if (t !== token) return;
+    img.src = v.src; img.alt = v.alt; cap.textContent = v.cap;
+    img.classList.remove('out');
+  }
+  tabs.forEach((b, i) => {
+    b.addEventListener('click', () => show(b.dataset.view));
+    b.addEventListener('keydown', (e) => {
+      const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (!d) return;
       e.preventDefault();
-      const form = document.getElementById('beta-form');
-      const success = document.getElementById('beta-success');
-      const error = document.getElementById('beta-error');
-      const btn = document.getElementById('beta-submit');
-      const showError = (msg) => { error.textContent = msg; error.classList.remove('hidden'); };
+      const n = tabs[(i + d + tabs.length) % tabs.length];
+      n.focus(); show(n.dataset.view);
+    });
+  });
 
-      error.classList.add('hidden');
-      const data = new FormData(form);
-      if (data.get('website')) return; // honeypot tripped: silently drop bot submissions
+  /* Open the details panel when someone follows a link to it */
+  const how = $('how');
+  const openHow = () => { if (location.hash === '#how') how.open = true; };
+  addEventListener('hashchange', openHow); openHow();
+  document.querySelectorAll('a[href="#how"]').forEach((a) => a.addEventListener('click', () => { how.open = true; }));
 
-      if (!BETA_FORM_ENDPOINT) {
-        showError('Signup is not available right now. Please try again later.');
-        return;
-      }
+  /* Beta dialog: native <dialog> gives focus trap, Esc, and focus return */
+  const dlg = $('beta'), form = $('beta-form'), err = $('beta-error'), ok = $('beta-ok'), btn = $('beta-submit');
+  const ENDPOINT = form.action;
+  const open = () => {
+    form.hidden = false; ok.hidden = true; err.hidden = true;
+    dlg.showModal();
+    form.elements.name.focus();
+  };
+  $('open-beta').addEventListener('click', open);
+  $('open-beta-2').addEventListener('click', open);
+  $('beta-close').addEventListener('click', () => dlg.close());
+  $('beta-done').addEventListener('click', () => dlg.close());
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
 
-      btn.disabled = true;
-      try {
-        const res = await fetch(BETA_FORM_ENDPOINT, {
-          method: 'POST',
-          headers: { 'Accept': 'application/json' },
-          body: data
-        });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        form.classList.add('hidden');
-        success.classList.remove('hidden');
-        setTimeout(() => {
-          closeBetaModal();
-          form.reset();
-          form.classList.remove('hidden');
-          success.classList.add('hidden');
-        }, 3500);
-      } catch (err) {
-        showError('Could not submit. Check your connection and try again.');
-      } finally {
-        btn.disabled = false;
-      }
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    err.hidden = true;
+    const data = new FormData(form);
+    if (data.get('website')) return; // honeypot
+    btn.disabled = true; btn.textContent = 'Sending...';
+    try {
+      const res = await fetch(ENDPOINT, { method: 'POST', headers: { Accept: 'application/json' }, body: data });
+      if (!res.ok) throw new Error(res.status);
+      form.reset(); form.hidden = true; ok.hidden = false;
+    } catch (_) {
+      err.textContent = 'That did not send. Check your connection and try again, or email sachin.sulu324@gmail.com.';
+      err.hidden = false;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Send me updates';
     }
-  </script>
-
+  });
+})();
+</script>
 </body>
 </html>
