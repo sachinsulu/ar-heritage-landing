@@ -1075,7 +1075,7 @@ Extract and sanitize into strict JSON complying with the AR Heritage mobile sche
           <p class="text-xs text-slate-400 mt-1">Get notified about new APK builds and new monument models.</p>
         </div>
 
-        <form id="beta-form" onsubmit="handleBetaSubmit(event)" class="space-y-4 pt-2">
+        <form id="beta-form" action="https://formspree.io/f/xaeqpzlw" method="POST" onsubmit="handleBetaSubmit(event)" class="space-y-4 pt-2">
           <!-- Honeypot: hidden from humans, bots fill it in -->
           <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="absolute -left-[9999px] w-px h-px opacity-0">
           <div>
@@ -1175,7 +1175,7 @@ Extract and sanitize into strict JSON complying with the AR Heritage mobile sche
     // Modal Controls
     // Set this to your form backend, e.g. 'https://formspree.io/f/xxxxxxx'.
     // While empty, the form shows an error instead of pretending to succeed.
-    const BETA_FORM_ENDPOINT = '';
+    const BETA_FORM_ENDPOINT = 'https://formspree.io/f/xaeqpzlw';
 
     function openBetaModal() {
       document.getElementById('beta-modal').classList.remove('hidden');
